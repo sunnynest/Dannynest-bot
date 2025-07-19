@@ -1,2 +1,7 @@
 aiogram==3.3.0
 python-dotenv
+git add requirements.txt
+git commit -m "Remove pydantic to fix dependency issue"
+git push
+git push --force
+
