@@ -1,9 +1,3 @@
-aiogram==3.3.0
+ aiogram==3.3.0
 python-dotenv
 pydantic>=2.4.1,<2.6
-git init
-git add requirements.txt
-git commit -m "Fix dependency conflict with pydantic"
-git branch -M main
-git remote add origin https://github.com/sunnynest.farm/sunnynest-bot.git
-git push -u origin main
