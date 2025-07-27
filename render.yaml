@@ -4,4 +4,4 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
-    pythonVersion: 3.11.8fix: specify correct Python version for aiohttp
+   
