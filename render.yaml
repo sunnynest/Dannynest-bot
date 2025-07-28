@@ -2,7 +2,13 @@ services:
   - type: web
     name: sunnynest-bot
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python bot.py
-    pythonVersion: 3.11.8
-
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python main.py"
+    autoDeploy: true
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
