@@ -4,9 +4,9 @@ services:
     env: python
     region: oregon
     plan: free
-    pythonVersion: 3.11.8
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "python bot.py"
+    startCommand: "python main.py"
+    pythonVersion: 3.11.8
     autoDeploy: true
     envVars:
       - key: BOT_TOKEN
