@@ -2,6 +2,7 @@ services:
   - type: web
     name: sunnynest-bot
     env: python
+    pythonVersion: 3.11.8
     region: oregon
     plan: free
     buildCommand: "pip install -r requirements.txt"
