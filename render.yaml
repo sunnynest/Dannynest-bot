@@ -2,9 +2,9 @@ services:
   - type: web
     name: sunnynest-bot
     env: python
-    pythonVersion: 3.11.8
     region: oregon
     plan: free
+    pythonVersion: 3.11.8
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python bot.py"
     autoDeploy: true
