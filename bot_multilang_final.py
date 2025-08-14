@@ -11,8 +11,6 @@ ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID")
 
 if not BOT_TOKEN or " " in BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN отсутствует или указан неверно. Добавьте его в Render > Environment.")
-if not OPENAI_API_KEY:
-    raise RuntimeError("OPENAI_API_KEY не установлен. Добавьте его в Render > Environment.")
 
 openai.api_key = OPENAI_API_KEY
 
@@ -36,6 +34,7 @@ translations = {
         "reminder_msg": "Напоминание: {text}",
         "error_ai": "Ошибка при обращении к ИИ: {error}.",
         "language_prompt": "Выберите язык (en/ru/kk/uk/es):",
+        
         "language_invalid": "Недопустимый код языка.",
         "language_set": "Язык установлен на {lang}."
     },
