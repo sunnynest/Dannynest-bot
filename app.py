@@ -7,9 +7,11 @@ app = FastAPI()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEB_DIR = os.path.join(BASE_DIR, "webapp")
+STATIC_DIR = os.path.join(WEB_DIR, "static")
 
-# Отдаём статические файлы, если появятся (картинки/стили)
-app.mount("/static", StaticFiles(directory=os.path.join(WEB_DIR, "static")), name="static")
+# Монтируем статические файлы только если папка есть
+if os.path.isdir(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/app", response_class=HTMLResponse)
 async def webapp(_: Request):
