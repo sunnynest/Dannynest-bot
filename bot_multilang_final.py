@@ -279,4 +279,10 @@ async def main() -> None:
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main())import os, sys
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+if not BOT_TOKEN or ":" not in BOT_TOKEN:
+    print("FATAL: BOT_TOKEN is missing or malformed", file=sys.stderr)
+    raise SystemExit(1)
+
+
