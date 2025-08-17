@@ -172,3 +172,12 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+import openai
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise SystemExit("OPENAI_API_KEY environment variable is not set")
+openai.api_key = OPENAI_API_KEY
+
+
+
