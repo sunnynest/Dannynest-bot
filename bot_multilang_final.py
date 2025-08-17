@@ -1,305 +1,170 @@
-import asyncio
-import os
-import openai
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command, CommandStart
-
-# Load environment variables
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID")
-
-if not BOT_TOKEN or " " in BOT_TOKEN:
-    raise RuntimeError("BOT_TOKEN отсутствует или указан неверно. Добавьте его в Render > Environment.")
-
-openai.api_key = OPENAI_API_KEY
-
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
-
-# Supported languages dictionary with translations
-translations = {
-    "ru": {
-        "start": "Бот запущен! Доступные команды:\n/order_eggs - заказать яйца\n/order_coop - заказать курятник\n/remind - установить напоминание\n/lang - сменить язык.",
-        "choose_pack": "Выберите количество коробок (1 = 12 шт., 2 = 24 шт., 3 = 36 шт., 5 = 60 шт.).",
-        "invalid_number": "Пожалуйста, введите корректное число (1, 2, 3, 5).",
-        "choose_color": "Выберите цвет яиц: белый или желтый.",
-        "confirm_order": "Ваш заказ: {pack} коробка(и), цвет: {color}.",
-        "order_sent_admin": "Ваш заказ отправлен администратору.",
-        "coop_prompt": "Опишите желаемый размер и особенности курятника:",
-        "coop_sent_admin": "Ваш запрос на курятник отправлен администратору.",
-        "remind_prompt": "Введите минуты и текст напоминания через двоеточие, например: '30: проверить яйца'.",
-        "remind_invalid_format": "Неверный формат. Используйте 'минуты: текст'.",
-        "remind_set": "Напоминание установлено через {minutes} мин.",
-        "reminder_msg": "Напоминание: {text}",
-        "error_ai": "Ошибка при обращении к ИИ: {error}.",
-        "language_prompt": "Выберите язык (en/ru/kk/uk/es):",
-        
-        "language_invalid": "Недопустимый код языка.",
-        "language_set": "Язык установлен на {lang}."
-    },
-    "kk": {
-        "start": "Бот іске косылды! Қол жетімді командалар:\n/order_eggs - жұмыртқа тапсыру\n/order_coop - тауық қорасын тапсыру\n/remind - еске салу орнату\n/lang - тілді өзгерту.",
-        "choose_pack": "Қорап санын таңдаңыз (1 = 12 шт., 2 = 24 шт., 3 = 36 шт., 5 = 60 шт.).",
-        "invalid_number": "Дұрыс сан енгізіңіз (1, 2, 3, 5).",
-        "choose_color": "Жұмыртқаның түсін таңдақыз: ақ немесе сары.",
-        "confirm_order": "Сіздің тапсырысыныз: {pack} қорап, түсі: {color}.",
-        "order_sent_admin": "Сіздің тапсырысыңыз әкімшіге жіберілді.",
-        "coop_prompt": "Қажетті тауық қорасының өлшемін және сипаттамасын жазыңыз:",
-        "coop_sent_admin": "Сіздің тауық қорасы бойынша сұранысыңыз әкімшіге жіберілді.",
-        "remind_prompt": "Минуттар мен еске салу мәтінін екі нүкте арқылы енгізіңіз, мысалы: '30: жұмыртқаларды тексеру'.",
-        "remind_invalid_format": "Формат дұрыс емес. 'минуттар: мәтін' деп жазыңыз.",
-        "remind_set": "Еске салу {minutes} минуттан кейін орнатылды.",
-        "reminder_msg": "Еске салу: {text}",
-        "error_ai": "ЖИ қызметіне сұрау кезінде қате: {error}.",
-        "language_prompt": "Тілді таңдаңыз (en/ru/kk/uk/es):",
-        "language_invalid": "Тіл коды жарамсыз.",
-        "language_set": "Тіл {lang} болып орнатылды."
-    },
-    "en": {
-        "start": "Bot started! Available commands:\n/order_eggs - order eggs\n/order_coop - order a chicken coop\n/remind - set a reminder\n/lang - change language.",
-        "choose_pack": "Choose number of boxes (1 = 12 pcs, 2 = 24 pcs, 3 = 36 pcs, 5 = 60 pcs).",
-        "invalid_number": "Please enter a valid number (1, 2, 3, 5).",
-        "choose_color": "Choose egg color: white or yellow.",
-        "confirm_order": "Your order: {pack} box(es), color: {color}.",
-        "order_sent_admin": "Your order has been sent to admin.",
-        "coop_prompt": "Describe the size and features of the coop you need:",
-        "coop_sent_admin": "Your coop request has been sent to admin.",
-        "remind_prompt": "Enter minutes and reminder text separated by a colon, e.g. '30: check the chickens'.",
-        "remind_invalid_format": "Invalid format. Use 'minutes: text'.",
-        "remind_set": "Reminder set in {minutes} minutes.",
-        "reminder_msg": "Reminder: {text}",
-        "error_ai": "Error contacting AI: {error}.",
-        "language_prompt": "Choose language (en/ru/kk/uk/es):",
-        "language_invalid": "Invalid language code.",
-        "language_set": "Language set to {lang}."
-    },
-    "uk": {
-        "start": "Бот запущено! Доступні команди:\n/order_eggs - замовити яйця\n/order_coop - замовити курник\n/remind - встановити нагадування\n/lang - змінити мову.",
-        "choose_pack": "Виберіть кількість коробок (1 = 12 шт., 2 = 24 шт., 3 = 36 шт., 5 = 60 шт.).",
-        "invalid_number": "Введіть правильний номер (1, 2, 3, 5).",
-        "choose_color": "Оберіть колір яєць: білі або жовті.",
-        "confirm_order": "Ваше замовлення: {pack} коробка(и), колір: {color}.",
-        "order_sent_admin": "Ваше замовлення надіслано адміністратору.",
-        "coop_prompt": "Опишіть розмір та характеристики потрібного курника:",
-        "coop_sent_admin": "Ваш запит на курник надіслано адміністратору.",
-        "remind_prompt": "Введіть хвилини та текст нагадування через двокрапку, напр. '30: нагодувати курей'.",
-        "remind_invalid_format": "Неправильний формат. Введіть 'minutes: text'.",
-        "remind_set": "Нагадування встановлено через {minutes} хвилин.",
-        "reminder_msg": "Нагадування: {text}",
-        "error_ai": "Помилка при з'єднанні з ІІ: {error}.",
-        "language_prompt": "Оберіть мову (en/ru/kk/uk/es):",
-        "language_invalid": "Неправильний код мови.",
-        "language_set": "Мову встановлено на {lang}."
-    },
-    "es": {
-        "start": "¡Bot iniciado! Comandos disponibles:\n/order_eggs - pedir huevos\n/order_coop - pedir gallinero\n/remind - crear recordatorio\n/lang - cambiar idioma.",
-        "choose_pack": "Elige cantidad de cajas (1 = 12 uds., 2 = 24 uds., 3 = 36 uds., 5 = 60 uds.).",
-        "invalid_number": "Ingrese un número válido (1, 2, 3, 5).",
-        "choose_color": "Elige el color de los huevos: blanco o amarillo.",
-        "confirm_order": "Tu pedido: {pack} caja(s), color: {color}.",
-        "order_sent_admin": "Tu pedido se ha enviado al administrador.",
-        "coop_prompt": "Describe el tamaño y características del gallinero que necesitas:",
-        "coop_sent_admin": "Tu solicitud de gallinero ha sido enviada al administrador.",
-        "remind_prompt": "Ingresa minutos y texto del recordatorio separados por dos puntos, p. ej. '30: alimentar a las gallinas'.",
-        "remind_invalid_format": "Formato incorrecto. Usa 'minutos: texto'.",
-        "remind_set": "Recordatorio programado en {minutes} minutos.",
-        "reminder_msg": "Recordatorio: {text}",
-        "error_ai": "Error al contactar la IA: {error}.",
-        "language_prompt": "Elige idioma (en/ru/kk/uk/es):",
-        "language_invalid": "Código de idioma inválido.",
-        "language_set": "El idioma se ha establecido a {lang}."
-    }
-}
-
-# Dictionary to track user states and selected language
-user_states = {}
-
-def get_user_lang(message: types.Message) -> str:
-    uid = message.from_user.id
-    # Return stored language if set by user
-    if uid in user_states and 'lang' in user_states[uid]:
-        return user_states[uid]['lang']
-    # Use telegram language_code if available else default to 'ru'
-    code = message.from_user.language_code or 'ru'
-    code = code.split('-')[0]  # use base code, e.g. 'en-US' -> 'en'
-    return code if code in translations else 'ru'
-
-async def get_chatgpt_response(prompt: str, lang: str) -> str:
-    # Provide system prompt by language to instruct ChatGPT to answer accordingly
-    system_prompts = {
-        "ru": "Ты помощник сервиса по продаже яиц и курятников. Отвечай всегда на русском языке и помогай по заказу яиц, курятников и рецептам.",
-        "kk": "Сен жұмыртқа мен тауық қораларын сату сервисінің көмекшісісің. Әрқашан қазақ тілінде жауап бере және жұмыртқаҚа, тауық қорасына, рецептерге қатысты көмектес.",
-        "en": "You are an assistant for an egg and chicken coop sales service. Always respond in English and help with egg orders, coop orders, and recipes.",
-        "uk": "Ти помічник сервісу з продажу яєць та курників. Відповідай завжди українською мовою та допомагай замовленням яєць, курників та рецептам.",
-        "es": "Eres un asistente de un servicio de venta de huevos y gallineros. Responde siempre en español y ayuda con pedidos de huevos, gallineros y recetas."
-    }
-    system_prompt = system_prompts.get(lang, system_prompts["ru"])
-    response = await openai.ChatCompletion.acreate(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=200
-    )
-    return response.choices[0].message.content.strip()
-
-@dp.message(CommandStart())
-async def on_start(message: types.Message) -> None:
-    lang = get_user_lang(message)
-    user_states[message.from_user.id] = {"lang": lang, "state": None}
-    await message.answer(translations[lang]["start"])
-
-@dp.message(Command("order_eggs"))
-async def order_eggs(message: types.Message) -> None:
-    lang = get_user_lang(message)
-    user_states[message.from_user.id] = {"lang": lang, "state": "eggs_pack"}
-    await message.answer(translations[lang]["choose_pack"])
-
-@dp.message(Command("order_coop"))
-async def order_coop(message: types.Message) -> None:
-    lang = get_user_lang(message)
-    user_states[message.from_user.id] = {"lang": lang, "state": "coop"}
-    await message.answer(translations[lang]["coop_prompt"])
-
-@dp.message(Command("remind"))
-async def remind(message: types.Message) -> None:
-    lang = get_user_lang(message)
-    user_states[message.from_user.id] = {"lang": lang, "state": "remind"}
-    await message.answer(translations[lang]["remind_prompt"])
-
-@dp.message(Command("lang"))
-async def set_language(message: types.Message) -> None:
-    lang = get_user_lang(message)
-    user_states[message.from_user.id] = {"lang": lang, "state": "set_lang"}
-    await message.answer(translations[lang]["language_prompt"])
-
-async def schedule_reminder(chat_id: int, minutes: int, text: str, lang: str):
-    await asyncio.sleep(minutes * 60)
-    await bot.send_message(chat_id, translations[lang]["reminder_msg"].format(text=text))
-    # Notify admin about reminder triggered
-    if ADMIN_CHAT_ID:
-        try:
-            await bot.send_message(int(ADMIN_CHAT_ID.lstrip("@")), f"Напоминание для {chat_id}: {text}")
-        except Exception:
-            pass
-
-@dp.message()
-async def handle_message(message: types.Message) -> None:
-    uid = message.from_user.id
-    lang = get_user_lang(message)
-    state = user_states.get(uid, {}).get("state")
-    text = message.text.strip()
-
-    if state == "eggs_pack":
-        if text not in ["1", "2", "3", "5"]:
-            await message.answer(translations[lang]["invalid_number"])
-            return
-        # Save pack count and ask for color
-        user_states[uid]["pack"] = text
-        user_states[uid]["state"] = "eggs_color"
-        await message.answer(translations[lang]["choose_color"])
-        return
-    elif state == "eggs_color":
-        color = text.lower()
-        if color not in ["белый", "желтый", "white", "yellow"]:
-            await message.answer(translations[lang]["choose_color"])
-            return
-        pack = user_states[uid]["pack"]
-        # Send order to admin
-        if ADMIN_CHAT_ID:
-            order_msg = f"Order: {pack} boxes, color: {color}, from user {uid}"
-            try:
-                await bot.send_message(int(ADMIN_CHAT_ID.lstrip("@")), order_msg)
-            except Exception:
-                pass
-        await message.answer(translations[lang]["confirm_order"].format(pack=pack, color=color))
-        await message.answer(translations[lang]["order_sent_admin"])
-        user_states[uid]["state"] = None
-        return
-    elif state == "coop":
-        # Forward coop order to admin
-        details = text
-        if ADMIN_CHAT_ID:
-            coop_msg = f"Coop request from {uid}: {details}"
-            try:
-                await bot.send_message(int(ADMIN_CHAT_ID.lstrip("@")), coop_msg)
-            except Exception:
-                pass
-        await message.answer(translations[lang]["coop_sent_admin"])
-        user_states[uid]["state"] = None
-        return
-    elif state == "remind":
-        # Expect 'minutes: text'
-        if ":" not in text:
-            await message.answer(translations[lang]["remind_invalid_format"])
-            return
-        parts = text.split(":", 1)
-        try:
-            minutes = int(parts[0].strip())
-            reminder_text = parts[1].strip()
-        except ValueError:
-            await message.answer(translations[lang]["remind_invalid_format"])
-            return
-        await message.answer(translations[lang]["remind_set"].format(minutes=minutes))
-        asyncio.create_task(schedule_reminder(uid, minutes, reminder_text, lang))
-        # Notify admin
-        if ADMIN_CHAT_ID:
-            try:
-                await bot.send_message(int(ADMIN_CHAT_ID.lstrip("@")), f"Reminder set for {uid} in {minutes} minutes: {reminder_text}")
-            except Exception:
-                pass
-        user_states[uid]["state"] = None
-        return
-    elif state == "set_lang":
-        # Set language by user selection
-        code = text.lower()
-        if code not in translations:
-            await message.answer(translations[lang]["language_invalid"])
-            return
-        user_states[uid]["lang"] = code
-        user_states[uid]["state"] = None
-        await message.answer(translations[code]["language_set"].format(lang=code))
-        return
-
-    # Fallback to ChatGPT
-    try:
-        response = await get_chatgpt_response(text, lang)
-        await message.answer(response)
-    except Exception as e:
-        await message.answer(translations[lang]["error_ai"].format(error=str(e)))
-
-async def main() -> None:
-    # Delete webhook in case it's set
-    try:
-        await bot.delete_webhook(drop_pending_updates=True)
-    except Exception:
-        pass
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())import os, sys
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-if not BOT_TOKEN or ":" not in BOT_TOKEN:
-    print("FATAL: BOT_TOKEN is missing or malformed", file=sys.stderr)
-    raise SystemExit(1)
-
 import os, sys, asyncio
-from aiogram import Bot, Dispatcher, F, types
+from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 
-# Читаем токен и проверяем
+# Читаем токен бота из переменных окружения и проверяем корректность
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN or ":" not in BOT_TOKEN:
     print("FATAL: BOT_TOKEN is missing or malformed", file=sys.stderr)
     raise SystemExit(1)
 
+# URL мини‑сайта WebApp (укажите свой домен Render + /app)
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://sunnynest-bot.onrender.com/app")
 
-# Дальше идут словари LANGS и TEXT, функции pick_lang и menu — оставьте как у вас, или возьмите из примера.
-# Затем объявление dp = Dispatcher() и все хендлеры, как у вас.
+# Список поддерживаемых языков
+LANGS = ["en", "ru", "uk", "be", "es"]
+
+# Словарь текстов для разных языков
+TEXT = {
+    "start": {
+        "en": "Welcome to Sunny Nest! Choose an option:",
+        "ru": "Добро пожаловать в Sunny Nest! Выберите раздел:",
+        "uk": "Ласкаво просимо до Sunny Nest! Оберіть розділ:",
+        "be": "Сардэчна запрашаем у Sunny Nest! Абярыце раздзел:",
+        "es": "¡Bienvenido a Sunny Nest! Elige una opción:",
+    },
+    "menu": {
+        "eggs": {
+            "en": "🥚 Order eggs",
+            "ru": "🥚 Заказать яйца",
+            "uk": "🥚 Замовити яйця",
+            "be": "🥚 Замовіць яйкі",
+            "es": "🥚 Pedir huevos",
+        },
+        "coops": {
+            "en": "🏠 Custom coops",
+            "ru": "🏠 Курятники на заказ",
+            "uk": "🏠 Курники на замовлення",
+            "be": "🏠 Курнікі на заказ",
+            "es": "🏠 Gallineros a medida",
+        },
+        "info": {
+            "en": "ℹ️ Info & Delivery",
+            "ru": "ℹ️ Инфо и доставка",
+            "uk": "ℹ️ Інфо та доставка",
+            "be": "ℹ️ Інфa і дастаўка",
+            "es": "ℹ️ Info y entrega",
+        },
+        "order_webapp": {
+            "en": "🛒 Order (WebApp)",
+            "ru": "🛒 Заказ (WebApp)",
+            "uk": "🛒 Замовлення (WebApp)",
+            "be": "🛒 Замова (WebApp)",
+            "es": "🛒 Pedido (WebApp)",
+        },
+    },
+    "pricing": {
+        "en": "Price: $5 per 12 eggs. Pickup or delivery (free from 5+ packs). Pay via Cash App: $SirotkinAlexander",
+        "ru": "Цена: $5 за 12 яиц. Самовывоз или доставка (бесплатно от 5 упаковок). Оплата: Cash App $SirotkinAlexander",
+        "uk": "Ціна: $5 за 12 яєць. Самовивіз або доставка (безкоштовно від 5 упаковок). Оплата: Cash App $SirotkinAlexander",
+        "be": "Кошт: $5 за 12 яйкаў. Самавываз або дастаўка (бясплатна ад 5 упак.). Аплата: Cash App $SirotkinAlexander",
+        "es": "Precio: $5 por 12 huevos. Retiro o entrega (gratis desde 5 paquetes). Pago: Cash App $SirotkinAlexander",
+    },
+    "coop_intro": {
+        "en": "Describe your coop (size, material, windows, budget). We'll quote and build.",
+        "ru": "Опишите желаемый курятник (размер, материал, окна, бюджет). Посчитаем и построим.",
+        "uk": "Опишіть бажаний курник (розмір, матеріал, вікна, бюджет). Порахуємо і побудуємо.",
+        "be": "Апішыце курнік (памер, матэрыял, вокны, бюджэт). Палічым і пабудуем.",
+        "es": "Describe tu gallinero (tamaño, material, ventanas, presupuesto). Cotizamos y construimos.",
+    },
+}
+
+def pick_lang(code: str | None) -> str:
+    """
+    Определяем язык пользователя по его языковому коду Telegram.
+    Если язык не поддерживается, возвращаем английский.
+    """
+    if not code:
+        return "en"
+    parts = code.split("-")
+    if parts:
+        lang = parts[0].lower()
+        if lang in LANGS:
+            return lang
+    return "en"
+
+def menu(lang: str) -> ReplyKeyboardMarkup:
+    """
+    Формируем главное меню с кнопками:
+      - Заказ через WebApp
+      - Заказ яиц (текстовый)
+      - Заказ курятников
+      - Информация
+    """
+    kb = [
+        [
+            KeyboardButton(
+                text=TEXT["menu"]["order_webapp"][lang],
+                web_app=WebAppInfo(url=WEBAPP_URL),
+            )
+        ],
+        [
+            KeyboardButton(text=TEXT["menu"]["eggs"][lang]),
+            KeyboardButton(text=TEXT["menu"]["coops"][lang]),
+        ],
+        [KeyboardButton(text=TEXT["menu"]["info"][lang])],
+    ]
+    return ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
+
+dp = Dispatcher()
+
+@dp.message(CommandStart())
+async def handle_start(m: types.Message):
+    """
+    /start — приветствуем пользователя и отправляем ему главное меню на его языке.
+    """
+    lang = pick_lang(m.from_user.language_code)
+    await m.answer(TEXT["start"][lang], reply_markup=menu(lang))
+
+@dp.message(F.web_app_data)
+async def handle_web_app_data(m: types.Message):
+    """
+    Принимаем данные из WebApp. Ожидаем JSON с типом заказа "eggs".
+    """
+    import json
+    try:
+        data = json.loads(m.web_app_data.data)
+        if data.get("type") == "eggs":
+            qty = data.get("qty")
+            method = data.get("method")
+            address = data.get("address") or "-"
+            name = data.get("name") or "-"
+            phone = data.get("phone") or "-"
+            lang = pick_lang(m.from_user.language_code)
+            text = (
+                f"✅ Заказ принят!\n"
+                f"• Дюжин: {qty}\n"
+                f"• Способ: {method}\n"
+                f"• Адрес: {address}\n"
+                f"• Имя/тел: {name} / {phone}\n\n"
+                f"{TEXT['pricing'][lang]}"
+            )
+            await m.answer(text)
+        else:
+            await m.answer("Received data.")
+    except Exception as e:
+        await m.answer(f"Bad data: {e}")
+
+@dp.message(F.text)
+async def handle_text(m: types.Message):
+    """
+    Обрабатываем текстовые сообщения: показываем информацию о ценах, курятниках или предлагаем использовать WebApp.
+    """
+    lang = pick_lang(m.from_user.language_code)
+    t = (m.text or "").strip()
+    # Обработка раздела "Курятники"
+    if t == TEXT["menu"]["coops"][lang]:
+        await m.answer(TEXT["coop_intro"][lang])
+        return
+    # Обработка раздела "Информация"
+    if t == TEXT["menu"]["info"][lang]:
+        await m.answer(TEXT["pricing"][lang])
+        return
+    # Обработка заказа яиц: просим использовать WebApp
+    if t == TEXT["menu"]["eggs"][lang]:
+        await m.answer("Для заказа яиц воспользуйтесь кнопкой «🛒 Order (WebApp)».")
+        return
 
 async def main():
     bot = Bot(BOT_TOKEN)
@@ -307,5 +172,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
