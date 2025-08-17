@@ -1,7 +1,7 @@
 import asyncio, os
 import uvicorn
 from app import app
-import bot_multilang_final as bot_module  # если твой файл бота называется иначе — замени здесь
+import bot_multilang_final as bot_module
 
 async def start_web():
     port = int(os.getenv("PORT", "8000"))
