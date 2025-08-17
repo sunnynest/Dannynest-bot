@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SunnyNest Order</title>
+  <title>SunnyNest</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:#0f1115; color:#e7e7e7; }
     .wrap { max-width: 520px; margin: 0 auto; padding: 16px; }
-    h1 { font-size: 22px; margin: 8px 0 16px; }
     .card { background:#151923; border:1px solid #202638; border-radius:16px; padding:16px; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+    .header-img { width: 100%; border-radius: 16px; margin-bottom: 16px; }
     label { display:block; margin:10px 0 6px; font-weight:600; }
     input, textarea { width:100%; padding:10px 12px; border-radius:12px; border:1px solid #2a3146; background:#121622; color:#e7e7e7; }
     .row { display:flex; gap:12px; }
@@ -23,23 +23,20 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>SunnyNest</h1>
+  <!-- декоративная картинка -->
+  <img src="static/header.png" alt="SunnyNest" class="header-img">
   <div class="card">
     <div id="title">Order eggs</div>
-
     <label id="lbl_qty">How many dozens?</label>
     <input id="qty" type="number" min="1" step="1" value="1" />
-
     <label id="lbl_method">Pickup or delivery?</label>
     <div class="radio">
       <label><input type="radio" name="method" value="pickup" checked> <span id="opt_pickup">Pickup</span></label>
       <label><input type="radio" name="method" value="delivery"> <span id="opt_delivery">Delivery</span></label>
     </div>
-
     <label id="lbl_address">Address (for delivery)</label>
     <textarea id="address" rows="3"></textarea>
     <div class="hint" id="pickup_hint">Pickup location will be sent after submit.</div>
-
     <div class="row">
       <div>
         <label id="lbl_name">Your name</label>
@@ -50,17 +47,17 @@
         <input id="phone" type="text" />
       </div>
     </div>
-
     <div class="hint" id="price_txt">Price: $5 per 12 eggs. Delivery free from 5+ packs.</div>
-
     <div style="margin-top:14px">
       <button id="sendBtn">Submit</button>
     </div>
   </div>
 </div>
-
 <script>
-  const tg = window.Telegram?.WebApp; tg?.expand();
+  const tg = window.Telegram?.WebApp;
+  tg?.expand();
+
+  // Словарь переводов
   const L = {
     title:{en:"Order eggs",ru:"Заказ яиц",uk:"Замовлення яєць",be:"Замова яек",es:"Pedir huevos"},
     qty:{en:"How many dozens?",ru:"Сколько дюжин?",uk:"Скільки дюжин?",be:"Колькі дзясяткаў?",es:"¿Cuántas docenas?"},
@@ -73,7 +70,7 @@
     price:{en:"Price: $5 per 12 eggs. Delivery free from 5+ packs.",
            ru:"Цена: $5 за 12 яиц. Доставка бесплатно от 5+ упаковок.",
            uk:"Ціна: $5 за 12 яєць. Доставка безкоштовна від 5+ упак.",
-           be:"Кошт: $5 за 12 яйкаў. Дастаўка бясплатная ад 5+ упак.",
+           be:"Кошт: $5 за 12 яйкаў. Дастаўка бясплатна ад 5+ упак.",
            es:"Precio: $5 por 12 huevos. Entrega gratis desde 5+ paquetes."},
     pickup_hint:{en:"Pickup location will be sent after submit.",
                  ru:"Адрес самовывоза придет после отправки.",
@@ -82,23 +79,26 @@
                  es:"La dirección de retiro llegará después del envío."},
     submit:{en:"Submit",ru:"Отправить",uk:"Надіслати",be:"Адправіць",es:"Enviar"}
   };
+
+  // Выбираем язык пользователя
   const code=(tg?.initDataUnsafe?.user?.language_code||navigator.language||"en").split("-")[0].toLowerCase();
   const ln=["en","ru","uk","be","es"].includes(code)?code:"en";
   const T=(k)=>L[k][ln];
 
-  title.textContent=T("title");
-  lbl_qty.textContent=T("qty");
-  lbl_method.textContent=T("method");
-  opt_pickup.textContent=T("pickup");
-  opt_delivery.textContent=T("delivery");
-  lbl_address.textContent=T("address");
-  lbl_name.textContent=T("name");
-  lbl_phone.textContent=T("phone");
-  price_txt.textContent=T("price");
-  pickup_hint.textContent=T("pickup_hint");
-  sendBtn.textContent=T("submit");
+  // Проставляем переводы
+  document.getElementById("title").textContent=T("title");
+  document.getElementById("lbl_qty").textContent=T("qty");
+  document.getElementById("lbl_method").textContent=T("method");
+  document.getElementById("opt_pickup").textContent=T("pickup");
+  document.getElementById("opt_delivery").textContent=T("delivery");
+  document.getElementById("lbl_address").textContent=T("address");
+  document.getElementById("lbl_name").textContent=T("name");
+  document.getElementById("lbl_phone").textContent=T("phone");
+  document.getElementById("price_txt").textContent=T("price");
+  document.getElementById("pickup_hint").textContent=T("pickup_hint");
+  document.getElementById("sendBtn").textContent=T("submit");
 
-  sendBtn.onclick=()=>{
+  document.getElementById("sendBtn").onclick=()=>{
     const qty=parseInt(document.getElementById("qty").value||"0",10);
     const method=document.querySelector('input[name="method"]:checked').value;
     const address=document.getElementById("address").value.trim();
@@ -112,49 +112,3 @@
 </script>
 </body>
 </html>
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SunnyNest Order</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    /* стили */
-  </style>
-</head>
-<body>
-<div class="wrap">
-  <!-- Ваша форма: поля количества, адреса, имени, телефона и кнопка Submit -->
-</div>
-<script>
-  const tg = window.Telegram.WebApp; tg.expand();
-  // Здесь логика отправки данных через tg.sendData(...)
-</script>
-</body>
-</html>
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SunnyNest</title>
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:#0f1115; color:#e7e7e7; }
-    .wrap { max-width: 520px; margin: 0 auto; padding: 16px; }
-    .header-img { width: 100%; border-radius: 16px; margin-bottom: 16px; }
-    /* здесь оставьте остальной ваш CSS */
-  </style>
-</head>
-<body>
-<div class="wrap">
-  <!-- вставляем картинку -->
-  <img src="static/header.png" alt="Sunny Nest" class="header-img">
-  <div class="card">
-    <!-- ваша форма заказа остаётся здесь -->
-  </div>
-</div>
-</body>
-</html>
-
-
