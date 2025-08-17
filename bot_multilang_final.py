@@ -178,6 +178,38 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise SystemExit("OPENAI_API_KEY environment variable is not set")
 openai.api_key = OPENAI_API_KEY
+@dp.message(F.text)
+async def handle_text(m: types.Message):
+    lang = pick_lang(m.from_user.language_code)
+    t = (m.text or "").strip()
+
+    # Проверяем кнопки
+    if t == TEXT["menu"]["coops"][lang]:
+        await m.answer(TEXT["coop_intro"][lang])
+        return
+    if t == TEXT["menu"]["info"][lang]:
+        await m.answer(TEXT["pricing"][lang])
+        return
+    if t == TEXT["menu"]["eggs"][lang]:
+        await m.answer("Для заказа яиц воспользуйтесь кнопкой «🛒 Order (WebApp)».")
+        return
+
+    # Если это не кнопка, считаем вопросом по готовке и отправляем в ChatGPT
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful chef assistant. Provide clear, concise and friendly answers to cooking questions."},
+                {"role": "user", "content": t}
+            ],
+            max_tokens=300,
+            temperature=0.5
+        )
+        answer = response.choices[0].message["content"].strip()
+    except Exception as e:
+        answer = f"Произошла ошибка при обращении к AI: {e}"
+
+    await m.answer(answer)
 
 
 
