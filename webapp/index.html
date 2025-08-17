@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SunnyNest Order</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:#0f1115; color:#e7e7e7; }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 22px; margin: 8px 0 16px; }
+    .card { background:#151923; border:1px solid #202638; border-radius:16px; padding:16px; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+    label { display:block; margin:10px 0 6px; font-weight:600; }
+    input, textarea { width:100%; padding:10px 12px; border-radius:12px; border:1px solid #2a3146; background:#121622; color:#e7e7e7; }
+    .row { display:flex; gap:12px; }
+    .row > div { flex:1; }
+    .hint { color:#9aa4b2; font-size:12px; margin-top:6px; }
+    .radio { display:flex; gap:10px; margin:8px 0 12px; }
+    .radio label { font-weight:500; }
+    button { width:100%; padding:12px 16px; border:0; border-radius:14px; font-weight:700; cursor:pointer; background:#4c8bf5; color:#fff; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>SunnyNest</h1>
+  <div class="card">
+    <div id="title">Order eggs</div>
+
+    <label id="lbl_qty">How many dozens?</label>
+    <input id="qty" type="number" min="1" step="1" value="1" />
+
+    <label id="lbl_method">Pickup or delivery?</label>
+    <div class="radio">
+      <label><input type="radio" name="method" value="pickup" checked> <span id="opt_pickup">Pickup</span></label>
+      <label><input type="radio" name="method" value="delivery"> <span id="opt_delivery">Delivery</span></label>
+    </div>
+
+    <label id="lbl_address">Address (for delivery)</label>
+    <textarea id="address" rows="3"></textarea>
+    <div class="hint" id="pickup_hint">Pickup location will be sent after submit.</div>
+
+    <div class="row">
+      <div>
+        <label id="lbl_name">Your name</label>
+        <input id="name" type="text" />
+      </div>
+      <div>
+        <label id="lbl_phone">Phone</label>
+        <input id="phone" type="text" />
+      </div>
+    </div>
+
+    <div class="hint" id="price_txt">Price: $5 per 12 eggs. Delivery free from 5+ packs.</div>
+
+    <div style="margin-top:14px">
+      <button id="sendBtn">Submit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const tg = window.Telegram?.WebApp; tg?.expand();
+  const L = {
+    title:{en:"Order eggs",ru:"Заказ яиц",uk:"Замовлення яєць",be:"Замова яек",es:"Pedir huevos"},
+    qty:{en:"How many dozens?",ru:"Сколько дюжин?",uk:"Скільки дюжин?",be:"Колькі дзясяткаў?",es:"¿Cuántas docenas?"},
+    method:{en:"Pickup or delivery?",ru:"Самовывоз или доставка?",uk:"Самовивіз чи доставка?",be:"Самавываз або дастаўка?",es:"¿Retiro o entrega?"},
+    pickup:{en:"Pickup",ru:"Самовывоз",uk:"Самовивіз",be:"Самавываз",es:"Retiro"},
+    delivery:{en:"Delivery",ru:"Доставка",uk:"Доставка",be:"Дастаўка",es:"Entrega"},
+    address:{en:"Address (for delivery)",ru:"Адрес (для доставки)",uk:"Адреса (для доставки)",be:"Адрас (для дастаўкі)",es:"Dirección (para entrega)"},
+    name:{en:"Your name",ru:"Ваше имя",uk:"Ваше ім'я",be:"Ваша імя",es:"Tu nombre"},
+    phone:{en:"Phone",ru:"Телефон",uk:"Телефон",be:"Тэлефон",es:"Teléfono"},
+    price:{en:"Price: $5 per 12 eggs. Delivery free from 5+ packs.",
+           ru:"Цена: $5 за 12 яиц. Доставка бесплатно от 5+ упаковок.",
+           uk:"Ціна: $5 за 12 яєць. Доставка безкоштовна від 5+ упак.",
+           be:"Кошт: $5 за 12 яйкаў. Дастаўка бясплатная ад 5+ упак.",
+           es:"Precio: $5 por 12 huevos. Entrega gratis desde 5+ paquetes."},
+    pickup_hint:{en:"Pickup location will be sent after submit.",
+                 ru:"Адрес самовывоза придет после отправки.",
+                 uk:"Адреса самовивозу прийде після відправки.",
+                 be:"Адрас самавывазу прыйдзе пасля адпраўкі.",
+                 es:"La dirección de retiro llegará después del envío."},
+    submit:{en:"Submit",ru:"Отправить",uk:"Надіслати",be:"Адправіць",es:"Enviar"}
+  };
+  const code=(tg?.initDataUnsafe?.user?.language_code||navigator.language||"en").split("-")[0].toLowerCase();
+  const ln=["en","ru","uk","be","es"].includes(code)?code:"en";
+  const T=(k)=>L[k][ln];
+
+  title.textContent=T("title");
+  lbl_qty.textContent=T("qty");
+  lbl_method.textContent=T("method");
+  opt_pickup.textContent=T("pickup");
+  opt_delivery.textContent=T("delivery");
+  lbl_address.textContent=T("address");
+  lbl_name.textContent=T("name");
+  lbl_phone.textContent=T("phone");
+  price_txt.textContent=T("price");
+  pickup_hint.textContent=T("pickup_hint");
+  sendBtn.textContent=T("submit");
+
+  sendBtn.onclick=()=>{
+    const qty=parseInt(document.getElementById("qty").value||"0",10);
+    const method=document.querySelector('input[name="method"]:checked').value;
+    const address=document.getElementById("address").value.trim();
+    const name=document.getElementById("name").value.trim();
+    const phone=document.getElementById("phone").value.trim();
+    if(!qty||qty<1){tg?.showAlert("Enter quantity ≥ 1");return;}
+    if(method==="delivery" && address.length<5){tg?.showAlert("Address required for delivery");return;}
+    tg?.sendData(JSON.stringify({type:"eggs",qty,method,address,name,phone,lang:ln}));
+    tg?.close();
+  };
+</script>
+</body>
+</html>
