@@ -9,7 +9,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEB_DIR = os.path.join(BASE_DIR, "webapp")
 STATIC_DIR = os.path.join(WEB_DIR, "static")
 
-# Монтируем статические файлы только если папка есть
+# Подключаем папку static только если она существует
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
