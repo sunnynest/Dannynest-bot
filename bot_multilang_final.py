@@ -285,4 +285,27 @@ if not BOT_TOKEN or ":" not in BOT_TOKEN:
     print("FATAL: BOT_TOKEN is missing or malformed", file=sys.stderr)
     raise SystemExit(1)
 
+import os, sys, asyncio
+from aiogram import Bot, Dispatcher, F, types
+from aiogram.filters import CommandStart
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
+
+# Читаем токен и проверяем
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+if not BOT_TOKEN or ":" not in BOT_TOKEN:
+    print("FATAL: BOT_TOKEN is missing or malformed", file=sys.stderr)
+    raise SystemExit(1)
+
+WEBAPP_URL = os.getenv("WEBAPP_URL", "https://sunnynest-bot.onrender.com/app")
+
+# Дальше идут словари LANGS и TEXT, функции pick_lang и menu — оставьте как у вас, или возьмите из примера.
+# Затем объявление dp = Dispatcher() и все хендлеры, как у вас.
+
+async def main():
+    bot = Bot(BOT_TOKEN)
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
 
